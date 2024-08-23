@@ -1,29 +1,82 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import userProfile from '../components/profile.vue'; // Adjust the path as per your project structure
-import search from '../components/Search.vue'
+import UserProfile from '../components/UserProfile.vue';
+import ArtistSearch from '../components/ArtistSearch.vue';
+import GenreByArtist from '../components/GenreByArtist.vue';
+import MusicQuiz from '../components/MusicQuiz.vue';
+import UserMatches from '../components/UserMatches.vue';
+import FindMatches from '../components/FindMatches.vue';
+import LoginPage from '../components/SignIn.vue';
+import SignUpPage from '../components/SignUp.vue';
+//import MainMenu from '../components/MainMenu.vue'; // Import the MainMenu component
 
-<template>
-    <head>
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' https://www.google-analytics.com https://ssl.google-analytics.com https://www.google.com https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://accounts.scdn.co"/>
-
-    </head>
-</template>
 const routes = [
   {
-    path: '/profile',
-    name: 'profile',
-    component: userProfile
+    path: '/',
+    name: 'Login',
+    component: LoginPage
   },
   {
-    path: '/search',
-    name: 'search',
-    component: search
+    path: '/SignUp',
+    name: 'SignUp',
+    component: SignUpPage
+  },
+  // {
+  //   path: '/main-menu',
+  //   name: 'MainMenu',
+  //   component: MainMenu,
+  //   meta: { requiresAuth: true }, // This route requires authentication
+  // },
+  {
+    path: '/UserProfile',
+    name: 'UserProfile',
+    component: UserProfile,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/ArtistSearch',
+    name: 'ArtistSearch',
+    component: ArtistSearch,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/GenreByArtist',
+    name: 'GenreByArtist',
+    component: GenreByArtist,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/MusicQuiz',
+    name: 'MusicQuiz',
+    component: MusicQuiz,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/UserMatches',
+    name: 'UserMatches',
+    component: UserMatches,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/FindMatches',
+    name: 'FindMatches',
+    component: FindMatches,
+    meta: { requiresAuth: true }
   }
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes
+});
+
+// Navigation guard to check authentication before accessing routes that require it
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = localStorage.getItem('user'); // Replace with actual auth check
+  if (to.matched.some(record => record.meta.requiresAuth) && !isAuthenticated) {
+    next('/');
+  } else {
+    next();
+  }
 });
 
 export default router;
