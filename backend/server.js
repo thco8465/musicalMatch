@@ -20,16 +20,17 @@ app.use(
   })
 );
 
+// Create a new pool instance with environment variables
 const pool = new Pool({
-  user: 'musicuser',
-  host: 'localhost',
-  database: 'musicdb',
-  password: 'ArkhamknightN7?',
-  port: 5432,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
 });
 
 app.post('/api/save-answers', async (req, res) => {
-  const { userId, answers } = req.body; // Retrieve userId from request body
+  const { userId, answers } = req.body;
   try {
     const client = await pool.connect();
     try {
@@ -38,7 +39,7 @@ app.post('/api/save-answers', async (req, res) => {
         await client.query(
           `INSERT INTO user_answers (user_id, question_id, selected_option, selected_option_index)
            VALUES ($1, $2, $3, $4)`,
-          [userId, answer.questionId, answer.selectedOption, answer.selectedOptionIndex] // Use userId here
+          [userId, answer.questionId, answer.selectedOption, answer.selectedOptionIndex]
         );
       }
       await client.query('COMMIT');
@@ -54,7 +55,6 @@ app.post('/api/save-answers', async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
-
 
 // Fetch profiles excluding the current user and profiles that have already been liked
 app.get('/profiles', async (req, res) => {
