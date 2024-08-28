@@ -40,7 +40,7 @@ export default {
     async fetchProfiles() {
       try {
         if (this.user) {
-          const response = await fetch(`http://localhost:5000/profiles?userId=${this.user.id}`);
+          const response = await fetch(`https://musicalmatchbackend.onrender.com/profiles?userId=${this.user.id}`);
           const data = await response.json();
           this.recentMatches = data;
           if (this.recentMatches.length > 0) {

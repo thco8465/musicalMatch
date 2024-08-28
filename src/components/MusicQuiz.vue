@@ -62,7 +62,7 @@ function saveUserAnswers() {
     userId: JSON.parse(localStorage.getItem('user')).id, // Add userId here
     answers: userAnswers.value,
   };
-  fetch('http://localhost:5000/api/save-answers', {
+  fetch('https://musicalmatchbackend.onrender.com/api/save-answers', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

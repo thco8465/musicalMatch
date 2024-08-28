@@ -40,7 +40,7 @@ export default {
       this.userId = user.id;
     }
 
-    const response = await fetch(`http://localhost:5000/profiles?userId=${this.userId}`);
+    const response = await fetch(`https://musicalmatchbackend.onrender.com/profiles?userId=${this.userId}`);
     const data = await response.json();
     this.profiles = data;
     console.log('Fetched Profiles:', this.profiles); // Debug log
@@ -61,7 +61,7 @@ export default {
       console.log('Sending like request:', { userId, profileId }); // Debug log
 
       try {
-        await fetch('http://localhost:5000/like', {
+        await fetch('https://musicalmatchbackend.onrender.com/like', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, likedUserId: profileId }),
@@ -72,7 +72,7 @@ export default {
     },
     async dislikeProfile(profileId) {
       try {
-        await fetch('http://localhost:5000/dislike', {
+        await fetch('https://musicalmatchbackend.onrender.com/dislike', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: this.userId, profileId }),
