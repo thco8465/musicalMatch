@@ -6,10 +6,14 @@ const helmet = require('helmet');
 const bcrypt = require('bcryptjs');
 
 const app = express();
-
+//PSQL Connection: PGPASSWORD=fdEpOjc3FS3ebtGrGIpoh1OuY5Gn96O3 psql -h dpg-cr7oamlumphs73af1ngg-a.oregon-postgres.render.com -U musicuser -d musicdb_6ioi
 app.use(cors({
-  origin: 'https://musicalmatch.onrender.com',
+  origin: [
+    'https://musicalmatchbackend.onrender.com',
+    'https://musicalmatch.onrender.com'
+  ]
 }));
+
 app.use(bodyParser.json());
 app.use(
   helmet({
