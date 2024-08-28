@@ -28,6 +28,34 @@ const pool = new Pool({
   port: 5432,
 });
 
+app.post('/api/save-answers', async (req, res) => {
+  const { userId, answers } = req.body; // Retrieve userId from request body
+  try {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (let answer of answers) {
+        await client.query(
+          `INSERT INTO user_answers (user_id, question_id, selected_option, selected_option_index)
+           VALUES ($1, $2, $3, $4)`,
+          [userId, answer.questionId, answer.selectedOption, answer.selectedOptionIndex] // Use userId here
+        );
+      }
+      await client.query('COMMIT');
+      res.json({ success: true });
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error('Error saving answers:', err.stack);
+    res.status(500).json({ success: false });
+  }
+});
+
+
 // Fetch profiles excluding the current user and profiles that have already been liked
 app.get('/profiles', async (req, res) => {
   const userId = parseInt(req.query.userId, 10);
@@ -40,80 +68,22 @@ app.get('/profiles', async (req, res) => {
         AND id NOT IN (
           SELECT liked_user_id FROM user_likes WHERE user_id = $1
         )
-      LIMIT 10; -- Limit the number of profiles returned
+      LIMIT 10
     `, [userId]);
 
     res.json(result.rows);
   } catch (err) {
-    console.error('Error fetching profiles: ', err);
+    console.error('Error fetching profiles:', err);
     res.status(500).send('Server Error');
   }
 });
+
 app.post('/like', async (req, res) => {
   const { userId, likedUserId } = req.body;
 
-  // Log the received data for debugging
   console.log('Received data:', { userId, likedUserId });
 
   try {
-    // Check if userId and likedUserId are provided
-    if (!userId || !likedUserId) {
-      return res.status(400).json({ error: 'Missing userId or likedUserId' });
-    }
-
-    // Check if userId exists in users table
-    const userResult = await pool.query('SELECT 1 FROM users WHERE id = $1', [userId]);
-    if (userResult.rowCount === 0) {
-      return res.status(400).json({ error: 'Invalid user ID' });
-    }
-
-    // Check if likedUserId exists in users table
-    const likedUserResult = await pool.query('SELECT 1 FROM users WHERE id = $1', [likedUserId]);
-    if (likedUserResult.rowCount === 0) {
-      return res.status(400).json({ error: 'Invalid liked user ID' });
-    }
-
-    // Record the like in the user_likes table
-    await pool.query(
-      `INSERT INTO user_likes (user_id, liked_user_id)
-       VALUES ($1, $2)
-       ON CONFLICT DO NOTHING`,
-      [userId, likedUserId]
-    );
-
-    res.status(200).json({ message: 'Profile liked successfully' });
-  } catch (error) {
-    console.error('Error liking profile:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Fetch profiles who liked a specific user's profile
-app.get('/likes/:userId', async (req, res) => {
-  const { userId } = req.params;
-  try {
-    const result = await pool.query(
-      `SELECT u.*
-       FROM users u
-       JOIN user_likes ul ON u.id = ul.user_id
-       WHERE ul.liked_user_id = $1`,
-      [userId]
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error fetching likes:', err);
-    res.status(500).send('Server Error');
-  }
-});
-
-
-
-app.post('/like', async (req, res) => {
-  const { userId, likedUserId } = req.body;
-
-  console.log('Server received:', { userId, likedUserId }); // Debug log
-
-  try {
     if (!userId || !likedUserId) {
       return res.status(400).json({ error: 'Missing userId or likedUserId' });
     }
@@ -141,7 +111,6 @@ app.post('/like', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-
 
 app.post('/dislike', async (req, res) => {
   const { userId, profileId } = req.body;
@@ -171,24 +140,18 @@ app.post('/dislike', async (req, res) => {
   }
 });
 
-
-
-// Example sign-up route
 app.post('/signup', async (req, res) => {
   const { firstName, lastName, password, email, phone, location, age } = req.body;
 
   try {
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert into the database
     await pool.query(
       `INSERT INTO users (first_name, last_name, password, email, phone, location, age)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [firstName, lastName, hashedPassword, email, phone, location, age]
     );
 
-    // Return a success response
     res.status(201).json({ success: true, message: 'User created successfully' });
   } catch (err) {
     console.error('Error signing up:', err);
@@ -196,12 +159,10 @@ app.post('/signup', async (req, res) => {
   }
 });
 
-// Example sign-in route
 app.post('/signin', async (req, res) => {
   const { emailOrPhone, password } = req.body;
 
   try {
-    // Query the database for the user by email or phone
     const result = await pool.query(
       'SELECT * FROM users WHERE email = $1 OR phone = $2',
       [emailOrPhone, emailOrPhone]
@@ -213,14 +174,12 @@ app.post('/signin', async (req, res) => {
 
     const user = result.rows[0];
 
-    // Check password
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
       return res.status(401).json({ success: false, message: 'Invalid password' });
     }
 
-    // Return user data excluding the password
-    const { password: _, ...userData } = user; // Rename 'password' to '_' to exclude it from the response
+    const { password: _, ...userData } = user;
     res.json({ success: true, user: userData });
   } catch (err) {
     console.error('Error signing in:', err);
