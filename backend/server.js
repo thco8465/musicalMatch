@@ -7,7 +7,9 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://musicalmatch.onrender.com',
+}));
 app.use(bodyParser.json());
 app.use(
   helmet({
