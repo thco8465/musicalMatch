@@ -27,7 +27,6 @@ import { questions } from '../data/questions.js';
 const currentQuestionIndex = ref(0);
 const selectedOptionIndex = ref(null);
 const userAnswers = ref([]); // Array to hold user's answers
-const userId = ref(null); // Variable to hold user ID
 
 const currentQuestion = computed(() => questions[currentQuestionIndex.value]);
 
@@ -93,17 +92,17 @@ function saveUserAnswers() {
 }
 
 
-// Function to retrieve user ID from localStorage
-function getUserId() {
-  const user = JSON.parse(localStorage.getItem('user'));
-  if (user) {
-    console.log('Retrieved User ID:', user.id); // Debug log
-    return user.id;
-  } else {
-    console.error('User not found in localStorage'); // Debug log
-    return null;
-  }
-}
+// // Function to retrieve user ID from localStorage
+// function getUserId() {
+//   const user = JSON.parse(localStorage.getItem('user'));
+//   if (user) {
+//     console.log('Retrieved User ID:', user.id); // Debug log
+//     return user.id;
+//   } else {
+//     console.error('User not found in localStorage'); // Debug log
+//     return null;
+//   }
+// }
 </script>
 
 <style scoped>
