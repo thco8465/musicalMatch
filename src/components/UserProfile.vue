@@ -56,7 +56,6 @@ import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { VAvatar } from 'vuetify';
 
-
 // Define reactive variables
 const displayName = ref('');
 const avatarUrl = ref('');
@@ -73,16 +72,33 @@ const handleAuthentication = async () => {
   const params = new URLSearchParams(window.location.search);
   const code = params.get("code");
 
+  console.log('Handling authentication. Code:', code);
+
   if (!code) {
+    console.log('No authorization code found. Redirecting to auth code flow...');
     redirectToAuthCodeFlow(clientId);
   } else {
-    const accessToken = await getAccessToken(clientId, code);
-    const profile = await fetchProfile(accessToken);
-    populateUI(profile);
-    // Retrieve user answers from localStorage
-    const storedAnswers = localStorage.getItem('userAnswers');
-    if (storedAnswers) {
-      userAnswers.value = JSON.parse(storedAnswers);
+    try {
+      console.log('Code found. Getting access token...');
+      const accessToken = await getAccessToken(clientId, code);
+      console.log('Access token obtained:', accessToken);
+      
+      console.log('Fetching user profile...');
+      const profile = await fetchProfile(accessToken);
+      console.log('User profile data:', profile);
+
+      console.log('Populating UI with profile data...');
+      populateUI(profile);
+
+      // Retrieve user answers from localStorage
+      const storedAnswers = localStorage.getItem('userAnswers');
+      console.log('Stored user answers:', storedAnswers);
+      if (storedAnswers) {
+        userAnswers.value = JSON.parse(storedAnswers);
+        console.log('User answers updated:', userAnswers.value);
+      }
+    } catch (error) {
+      console.error('Error in handleAuthentication:', error);
     }
   }
 };
@@ -101,9 +117,9 @@ const redirectToAuthCodeFlow = async (clientId) => {
   params.append("code_challenge_method", "S256");
   params.append("code_challenge", challenge);
 
+  console.log('Redirecting to Spotify auth URL:', `https://accounts.spotify.com/authorize?${params.toString()}`);
   document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
 };
-
 
 // Function to generate code verifier
 const generateCodeVerifier = (length) => {
@@ -121,15 +137,16 @@ const generateCodeChallenge = async (codeVerifier) => {
   const data = new TextEncoder().encode(codeVerifier);
   if (window.crypto && window.crypto.subtle) {
     const digest = await window.crypto.subtle.digest('SHA-256', data);
-    return btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(digest))))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-    // Proceed with cryptographic operations
-} else {
+    const challenge = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(digest))))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    console.log('Generated code challenge:', challenge);
+    return challenge;
+  } else {
     console.error('Web Cryptography API is not supported in this environment.');
-    // Handle the error, maybe provide a fallback or an error message to the user
-}
+    return '';
+  }
 };
 
 // Function to fetch access token from Spotify API
@@ -143,37 +160,57 @@ const getAccessToken = async (clientId, code) => {
   params.append("redirect_uri", "https://musicalmatch.onrender.com/UserProfile"); // Updated redirect URI
   params.append("code_verifier", verifier);
 
-  const result = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: params
-  });
+  try {
+    console.log('Fetching access token from Spotify API...');
+    const result = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params
+    });
 
-  const { access_token } = await result.json();
-  return access_token;
+    const data = await result.json();
+    console.log('Access token response:', data);
+    return data.access_token;
+  } catch (error) {
+    console.error('Error fetching access token:', error);
+    throw error;
+  }
 };
-
 
 // Function to fetch user profile from Spotify API
 const fetchProfile = async (token) => {
-  const result = await fetch("https://api.spotify.com/v1/me", {
-    method: "GET", headers: { Authorization: `Bearer ${token}` }
-  });
+  try {
+    console.log('Fetching user profile from Spotify API...');
+    const result = await fetch("https://api.spotify.com/v1/me", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-  return await result.json();
+    const profile = await result.json();
+    console.log('User profile response:', profile);
+    return profile;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    throw error;
+  }
 };
 
 // Function to populate UI with profile information
 const populateUI = (profile) => {
+  console.log('Populating UI with profile data:', profile);
   displayName.value = profile.display_name;
-  avatarUrl.value = profile.images && profile.images.length > 0 ? profile.images[0].url : ''; userId.value = profile.id; userId.value = profile.id;
+  avatarUrl.value = profile.images && profile.images.length > 0 ? profile.images[0].url : '';
+  userId.value = profile.id;
   email.value = profile.email;
   spotifyUri.value = profile.uri;
+  
   const userProfileData = JSON.parse(localStorage.getItem('userProfile'));
+  console.log('User profile data from localStorage:', userProfileData);
 
   // Update user answers if available
   if (userProfileData && userProfileData.answers) {
     userAnswers.value = userProfileData.answers;
+    console.log('Updated user answers:', userAnswers.value);
   }
 };
 
@@ -181,7 +218,6 @@ const populateUI = (profile) => {
 onMounted(handleAuthentication);
 
 </script>
-
 
 <style>
 .v-card {
