@@ -96,6 +96,33 @@ app.post('/api/save-answers', async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+// In server.js or relevant backend file
+app.get('/UserProfile', async (req, res) => {
+  const { code } = req.query;
+
+  if (!code) {
+    return res.status(400).send('Authorization code not provided');
+  }
+
+  try {
+    // Exchange code for access token
+    const response = await axios.post('https://accounts.spotify.com/api/token', new URLSearchParams({
+      grant_type: 'authorization_code',
+      code: code,
+      redirect_uri: 'https://musicalmatch.onrender.com/UserProfile',
+      client_id: process.env.CLIENT_ID,
+      client_secret: process.env.CLIENT_SECRET,
+    }), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+
+    const { access_token } = response.data;
+    res.redirect(`https://musicalmatch.onrender.com/profile?access_token=${access_token}`);
+  } catch (error) {
+    console.error('Error handling OAuth callback:', error);
+    res.status(500).send('Server Error');
+  }
+});
 
 // Fetch profiles excluding the current user and profiles that have already been liked
 app.get('/profiles', async (req, res) => {
