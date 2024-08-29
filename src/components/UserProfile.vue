@@ -87,7 +87,6 @@ const handleAuthentication = async () => {
   }
 };
 
-// Function to redirect user to Spotify authorization flow
 const redirectToAuthCodeFlow = async (clientId) => {
   const verifier = generateCodeVerifier(128);
   const challenge = await generateCodeChallenge(verifier);
@@ -97,13 +96,14 @@ const redirectToAuthCodeFlow = async (clientId) => {
   const params = new URLSearchParams();
   params.append("client_id", clientId);
   params.append("response_type", "code");
-  params.append("redirect_uri", "http://localhost:8080/UserProfile");
+  params.append("redirect_uri", "https://musicalmatchbackend.onrender.com/UserProfile"); // Updated redirect URI
   params.append("scope", "user-read-private user-read-email");
   params.append("code_challenge_method", "S256");
   params.append("code_challenge", challenge);
 
   document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
 };
+
 
 // Function to generate code verifier
 const generateCodeVerifier = (length) => {
@@ -140,7 +140,7 @@ const getAccessToken = async (clientId, code) => {
   params.append("client_id", clientId);
   params.append("grant_type", "authorization_code");
   params.append("code", code);
-  params.append("redirect_uri", "http://localhost:8080/UserProfile");
+  params.append("redirect_uri", "https://musicalmatch.onrender.com/UserProfile"); // Updated redirect URI
   params.append("code_verifier", verifier);
 
   const result = await fetch("https://accounts.spotify.com/api/token", {
@@ -152,6 +152,7 @@ const getAccessToken = async (clientId, code) => {
   const { access_token } = await result.json();
   return access_token;
 };
+
 
 // Function to fetch user profile from Spotify API
 const fetchProfile = async (token) => {
