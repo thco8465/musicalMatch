@@ -15,16 +15,26 @@ app.use(cors({
   origin: [
     'https://musicalmatchbackend.onrender.com',
     'https://musicalmatch.onrender.com'
-  ]
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(bodyParser.json());
+
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        scriptSrc: ["'self'", "https://accounts.spotify.com", "'sha256-YqD0Y6nJN+K0Y08J+Ena6eHgZrJ7WcWbIsC/u7GiyVk='"],
+        styleSrc: ["'self'", "https://fonts.googleapis.com"],
+        imgSrc: ["'self'", "data:", "https://*.spotify.com"],
+        connectSrc: ["'self'", "https://accounts.spotify.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        objectSrc: ["'none'"],
+        frameSrc: ["https://accounts.spotify.com"], // For embedding content from Spotify if needed
+        upgradeInsecureRequests: [],
       },
     },
   })
