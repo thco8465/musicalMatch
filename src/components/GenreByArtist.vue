@@ -107,7 +107,7 @@ async function searchArtist() {
   loading.value = true;
   try {
     // Fetch the Spotify token from your backend service
-    const tokenResponse = await axios.get('http://localhost:3000/spotify-token');
+    const tokenResponse = await axios.get('https://musicalmatchbackend.onrender.com/spotify-token');
     const accessToken = tokenResponse.data.token;
 
     const fetchedArtist = await getArtistInfo(artistName.value, accessToken);

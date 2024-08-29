@@ -57,7 +57,7 @@ export default {
 
       try {
         // Fetch the Spotify token from your backend service
-        const tokenResponse = await axios.get('http://localhost:3000/spotify-token');
+        const tokenResponse = await axios.get('https://musicalmatchbackend.onrender.com/spotify-token');
         const token = tokenResponse.data.token;
 
         // Use the token to search for artists by genre
