@@ -96,7 +96,7 @@ const redirectToAuthCodeFlow = async (clientId) => {
   const params = new URLSearchParams();
   params.append("client_id", clientId);
   params.append("response_type", "code");
-  params.append("redirect_uri", "https://musicalmatchbackend.onrender.com/UserProfile"); // Updated redirect URI
+  params.append("redirect_uri", "https://musicalmatch.onrender.com/UserProfile"); // Updated redirect URI
   params.append("scope", "user-read-private user-read-email");
   params.append("code_challenge_method", "S256");
   params.append("code_challenge", challenge);
