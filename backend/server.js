@@ -27,7 +27,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "https://accounts.spotify.com", "'sha256-YqD0Y6nJN+K0Y08J+Ena6eHgZrJ7WcWbIsC/u7GiyVk='"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'","https://accounts.spotify.com", "'sha256-YqD0Y6nJN+K0Y08J+Ena6eHgZrJ7WcWbIsC/u7GiyVk='"],
         styleSrc: ["'self'", "https://fonts.googleapis.com"],
         imgSrc: ["'self'", "data:", "https://*.spotify.com"],
         connectSrc: ["'self'", "https://accounts.spotify.com"],
