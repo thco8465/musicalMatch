@@ -102,11 +102,14 @@ async function getArtistInfo(artistName, accessToken) {
 
 // Function to handle artist search
 async function searchArtist() {
-  const accessToken = 'BQBF-7s_78GQl5DzapRwRlMNW3Auot8NfHyDvc7j2mq65w8Rsv1QKMm1o6MS6iIogd4ktzH-U6L5G3h_7SMis02nJNsFPKy7UoSfxvkaNRe5SKAhGNs'; // Replace with your valid access token
   artist.value = null;
   error.value = '';
   loading.value = true;
   try {
+    // Fetch the Spotify token from your backend service
+    const tokenResponse = await axios.get('http://localhost:3000/spotify-token');
+    const accessToken = tokenResponse.data.token;
+
     const fetchedArtist = await getArtistInfo(artistName.value, accessToken);
     artist.value = fetchedArtist;
   } catch (err) {
@@ -116,6 +119,7 @@ async function searchArtist() {
   }
 }
 </script>
+
 
 <style scoped>
 .profile-container {

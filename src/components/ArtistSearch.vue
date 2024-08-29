@@ -40,46 +40,50 @@
   
   <script>
   import { ref } from 'vue';
-  import axios from 'axios';
-  
-  export default {
-    name: 'ArtistSearch',
-    setup() {
-      const searchQuery = ref('');
-      const searchResults = ref([]);
-      const loading = ref(false);
-      const error = ref('');
-  
-      const handleSearch = async () => {
-        loading.value = true;
-        error.value = '';
-        searchResults.value = [];
-  
-        const token = 'BQBF-7s_78GQl5DzapRwRlMNW3Auot8NfHyDvc7j2mq65w8Rsv1QKMm1o6MS6iIogd4ktzH-U6L5G3h_7SMis02nJNsFPKy7UoSfxvkaNRe5SKAhGNs';
-  
-        try {
-          const response = await axios.get(`https://api.spotify.com/v1/search`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            },
-            params: {
-              q: `genre:"${searchQuery.value}"`,
-              type: 'artist',
-              limit: 10
-            }
-          });
-  
-          searchResults.value = response.data.artists.items;
-        } catch (err) {
-          error.value = 'Error fetching data. Please try again.';
-        } finally {
-          loading.value = false;
-        }
-      };
-  
-      return { searchQuery, searchResults, loading, error, handleSearch };
-    }
-  };
+import axios from 'axios';
+
+export default {
+  name: 'ArtistSearch',
+  setup() {
+    const searchQuery = ref('');
+    const searchResults = ref([]);
+    const loading = ref(false);
+    const error = ref('');
+
+    const handleSearch = async () => {
+      loading.value = true;
+      error.value = '';
+      searchResults.value = [];
+
+      try {
+        // Fetch the Spotify token from your backend service
+        const tokenResponse = await axios.get('http://localhost:3000/spotify-token');
+        const token = tokenResponse.data.token;
+
+        // Use the token to search for artists by genre
+        const response = await axios.get(`https://api.spotify.com/v1/search`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
+            q: `genre:"${searchQuery.value}"`,
+            type: 'artist',
+            limit: 10
+          }
+        });
+
+        searchResults.value = response.data.artists.items;
+      } catch (err) {
+        error.value = 'Error fetching data. Please try again.';
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    return { searchQuery, searchResults, loading, error, handleSearch };
+  }
+};
+
   </script>
   
   <style scoped>

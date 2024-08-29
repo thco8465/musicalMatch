@@ -1,9 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const axios = require('axios');
 const cors = require('cors');
 const { Pool } = require('pg');
 const helmet = require('helmet');
 const bcrypt = require('bcryptjs');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
 //PSQL Connection: PGPASSWORD=fdEpOjc3FS3ebtGrGIpoh1OuY5Gn96O3 psql -h dpg-cr7oamlumphs73af1ngg-a.oregon-postgres.render.com -U musicuser -d musicdb_6ioi
@@ -34,7 +38,38 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
 });
+let spotifyToken = '';
 
+const getSpotifyToken = async () => {
+  try {
+    const response = await axios.post('https://accounts.spotify.com/api/token', null, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`).toString('base64'),
+      },
+      params: {
+        grant_type: 'client_credentials',
+      },
+    });
+
+    spotifyToken = response.data.access_token;
+  } catch (error) {
+    console.error('Error fetching Spotify token:', error.message);
+  }
+};
+
+// Automatically fetch the token every hour
+setInterval(getSpotifyToken, 3600000); // 3600000 ms = 1 hour
+
+// Fetch the token on server start
+getSpotifyToken();
+
+app.get('/spotify-token', (req, res) => {
+  if (!spotifyToken) {
+    return res.status(500).json({ error: 'Token not available' });
+  }
+  res.json({ token: spotifyToken });
+});
 app.post('/api/save-answers', async (req, res) => {
   const { userId, answers } = req.body;
   try {
