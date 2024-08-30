@@ -123,8 +123,8 @@ onMounted(fetchUserProfile);
 }
 
 .profile-img {
+  position: relative;
   height: 200px;
-  object-fit: cover; /* Ensures the image covers the container */
   width: 100%;
 }
 </style>
