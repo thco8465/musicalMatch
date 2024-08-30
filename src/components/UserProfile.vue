@@ -118,13 +118,16 @@ onMounted(fetchUserProfile);
 </script>
 
 <style scoped>
-.profile-container {
-  margin-top: 80px; /* Adjust this value based on your layout */
-}
-
 .profile-img {
   position: relative;
   height: 200px;
   width: 100%;
+  overflow: hidden; /* Ensure any overflow is hidden */
+}
+
+.profile-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensure the image covers the container without stretching */
 }
 </style>
