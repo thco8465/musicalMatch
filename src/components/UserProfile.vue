@@ -73,9 +73,13 @@ const isEditing = ref(false);
 const fetchUserProfile = async () => {
   try {
     const userId = store.state.user.id;
-    const response = await fetch(`https://musicalmatchbackend.onrender.com/users/${userId}`);
+    const cacheBuster = new Date().getTime(); // Add a unique query parameter to bypass cache
+    const response = await fetch(`https://musicalmatchbackend.onrender.com/users/${userId}?cacheBuster=${cacheBuster}`);
     const data = await response.json();
-    profileData.value = data;
+    profileData.value = {
+      ...profileData.value,
+      ...data.user, // Ensure the data is correctly mapped
+    };
 
     // Fetch stored quiz answers if available
     const storedAnswers = localStorage.getItem('userAnswers');
