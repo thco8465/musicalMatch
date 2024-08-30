@@ -14,13 +14,13 @@
         <v-row>
           <v-col cols="12">
             <v-form ref="form" v-model="valid" lazy-validation>
-              <v-text-field v-model="profileData.first_name" label="First Name" required></v-text-field>
-              <v-text-field v-model="profileData.last_name" label="Last Name" required></v-text-field>
-              <v-text-field v-model="profileData.age" label="Age" type="number"></v-text-field>
-              <v-text-field v-model="profileData.location" label="Location"></v-text-field>
-              <v-textarea v-model="profileData.bio" label="Bio"></v-textarea>
-              <v-text-field v-model="profileData.email" label="Email" type="email" required></v-text-field>
-              <v-text-field v-model="profileData.phone" label="Phone Number" type="tel"></v-text-field>
+              <v-text-field v-model="profileData.first_name" label="First Name" :disabled="!isEditing" required></v-text-field>
+              <v-text-field v-model="profileData.last_name" label="Last Name" :disabled="!isEditing" required></v-text-field>
+              <v-text-field v-model="profileData.age" label="Age" type="number" :disabled="!isEditing"></v-text-field>
+              <v-text-field v-model="profileData.location" label="Location" :disabled="!isEditing"></v-text-field>
+              <v-textarea v-model="profileData.bio" label="Bio" :disabled="!isEditing"></v-textarea>
+              <v-text-field v-model="profileData.email" label="Email" type="email" :disabled="!isEditing" required></v-text-field>
+              <v-text-field v-model="profileData.phone" label="Phone Number" type="tel" :disabled="!isEditing"></v-text-field>
               
               <v-list-item v-if="userAnswers.length > 0">
                 <v-list-item-icon>
@@ -40,18 +40,18 @@
         </v-row>
       </v-card-text>
       <v-card-actions>
-        <v-btn color="primary" @click="saveProfile" :disabled="!valid">Save</v-btn>
+        <v-btn color="primary" @click="toggleEdit">{{ isEditing ? 'Cancel' : 'Edit' }}</v-btn>
+        <v-btn color="secondary" @click="saveProfile" :disabled="!isEditing || !valid">Save</v-btn>
       </v-card-actions>
     </v-card>
   </v-container>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useStore } from 'vuex'; // If you're using Vuex to manage state
-//import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 
 const store = useStore();
-//const router = useRouter();
 
 const profileData = ref({
   first_name: '',
@@ -67,7 +67,8 @@ const profileData = ref({
 const userAnswers = ref([]);
 
 const valid = ref(false);
-const defaultAvatar = '/images/dog1.jpg'; // Add a path to a default avatar image
+const defaultAvatar = '/images/dog1.jpg'; // Path to a default avatar image
+const isEditing = ref(false);
 
 const fetchUserProfile = async () => {
   try {
@@ -102,9 +103,14 @@ const saveProfile = async () => {
     // Optionally, update localStorage or Vuex store with the updated profile
     const updatedProfile = await response.json();
     store.commit('setUser', updatedProfile);
+    isEditing.value = false; // Exit edit mode after saving
   } catch (error) {
     console.error('Error saving profile:', error);
   }
+};
+
+const toggleEdit = () => {
+  isEditing.value = !isEditing.value;
 };
 
 onMounted(fetchUserProfile);

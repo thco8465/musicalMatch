@@ -16,7 +16,9 @@
       </v-card-actions>
       <v-card-subtitle>Harmony: {{ currentProfile.similarityScore }}</v-card-subtitle>
     </v-card>
-    <div v-else>No more profiles to display.</div>
+    <div v-else class="no-profiles">
+      <p>No more profiles to display.</p>
+    </div>
   </div>
 </template>
 
@@ -78,5 +80,17 @@ export default {
   letter-spacing: 1px;
   text-align: center;
   margin: 20px 0;
+}
+.no-profiles {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+}
+.no-profiles p {
+  font-family: 'Great Vibes', cursive;
+  font-size: 24px;
+  color: #d7263d;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 </style>
