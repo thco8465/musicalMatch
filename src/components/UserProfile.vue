@@ -119,17 +119,13 @@ onMounted(fetchUserProfile);
 
 <style scoped>
 .profile-img {
-  position: relative;
   height: 200px;
   width: 100%;
   overflow: hidden; /* Ensure any overflow is hidden */
+  padding-top: 20px; /* Adjust this value to move the image down */
 }
 
 .profile-img img {
-  position: absolute;
-  top: 0%; /* Adjust this value to move the image down */
-  left: 50%;
-  transform: translate(-50%, 0); /* Center horizontally; no vertical adjustment needed */
   width: 100%;
   height: auto; /* Maintain aspect ratio */
   object-fit: cover; /* Ensure the image covers the container */
