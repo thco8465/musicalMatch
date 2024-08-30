@@ -126,8 +126,13 @@ onMounted(fetchUserProfile);
 }
 
 .profile-img img {
+  position: absolute;
+  top: 50%; /* Adjust this value to move the image down */
+  left: 50%;
+  transform: translate(-50%, -50%); /* Center the image */
   width: 100%;
-  height: 100%;
-  object-fit: cover; /* Ensure the image covers the container without stretching */
+  height: auto; /* Maintain aspect ratio */
+  object-fit: cover; /* Ensure the image covers the container */
 }
+
 </style>
