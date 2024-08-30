@@ -1,11 +1,11 @@
 <template>
   <v-container fluid>
     <v-card class="mx-auto" max-width="800" outlined elevation="2">
-      <v-img :src="avatarUrl" height="200px" class="grey lighten-2">
+      <v-img :src="profileData.profile_picture || defaultAvatar" height="200px" class="grey lighten-2">
         <v-row no-gutters>
           <v-col>
             <v-avatar size="100" class="mt-n16 ml-4">
-              <img :src="avatarUrl" alt="Profile Avatar">
+              <img :src="profileData.profile_picture || defaultAvatar" alt="Profile Avatar">
             </v-avatar>
           </v-col>
         </v-row>
@@ -13,213 +13,104 @@
       <v-card-text>
         <v-row>
           <v-col cols="12">
-            <v-list-item>
-              <v-list-item-icon>
-                <v-icon>mdi-account</v-icon>
-              </v-list-item-icon>
-              <v-list-item-content>
-                <v-list-item-title>User ID</v-list-item-title>
-                <v-list-item-subtitle>{{ userId }}</v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-            <v-list-item>
-              <v-list-item-icon>
-                <v-icon>mdi-spotify</v-icon>
-              </v-list-item-icon>
-              <v-list-item-content>
-                <v-list-item-title>Spotify URI</v-list-item-title>
-                <v-list-item-subtitle><a :href="spotifyUri">{{ spotifyUri }}</a></v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-            <v-list-item v-if="userAnswers.length > 0">
-              <v-list-item-icon>
-                <v-icon>mdi-clipboard-text</v-icon>
-              </v-list-item-icon>
-              <v-list-item-content>
-                <v-list-item-title>Quiz Answers</v-list-item-title>
-                <v-list-item-subtitle>
-                  <ul>
-                    <li v-for="(answer, index) in userAnswers" :key="index">{{ answer.selectedOption }}</li>
-                  </ul>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
+            <v-form ref="form" v-model="valid" lazy-validation>
+              <v-text-field v-model="profileData.first_name" label="First Name" required></v-text-field>
+              <v-text-field v-model="profileData.last_name" label="Last Name" required></v-text-field>
+              <v-text-field v-model="profileData.age" label="Age" type="number"></v-text-field>
+              <v-text-field v-model="profileData.location" label="Location"></v-text-field>
+              <v-textarea v-model="profileData.bio" label="Bio"></v-textarea>
+              <v-text-field v-model="profileData.email" label="Email" type="email" required></v-text-field>
+              <v-text-field v-model="profileData.phone" label="Phone Number" type="tel"></v-text-field>
+              
+              <v-list-item v-if="userAnswers.length > 0">
+                <v-list-item-icon>
+                  <v-icon>mdi-clipboard-text</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Quiz Answers</v-list-item-title>
+                  <v-list-item-subtitle>
+                    <ul>
+                      <li v-for="(answer, index) in userAnswers" :key="index">{{ answer.selectedOption }}</li>
+                    </ul>
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-form>
           </v-col>
         </v-row>
       </v-card-text>
+      <v-card-actions>
+        <v-btn color="primary" @click="saveProfile" :disabled="!valid">Save</v-btn>
+      </v-card-actions>
     </v-card>
   </v-container>
 </template>
-
 <script setup>
-import { ref } from 'vue';
-import { onMounted } from 'vue';
-import { VAvatar } from 'vuetify';
+import { ref, onMounted } from 'vue';
+import { useStore } from 'vuex'; // If you're using Vuex to manage state
+import { useRouter } from 'vue-router';
 
-// Define reactive variables
-const displayName = ref('');
-const avatarUrl = ref('');
-const userId = ref('');
-const email = ref('');
-const spotifyUri = ref('');
+const store = useStore();
+const router = useRouter();
+
+const profileData = ref({
+  first_name: '',
+  last_name: '',
+  age: null,
+  location: '',
+  bio: '',
+  profile_picture: '',
+  email: '',
+  phone: ''
+});
+
 const userAnswers = ref([]);
 
-// Your client ID from Spotify Developer Dashboard
-const clientId = "5ff8a50fd4354b47b8e3236e6df107f4";
+const valid = ref(false);
+const defaultAvatar = 'path-to-default-avatar.png'; // Add a path to a default avatar image
 
-// Function to handle authentication and fetch profile information
-const handleAuthentication = async () => {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get("code");
+const fetchUserProfile = async () => {
+  try {
+    const userId = store.state.user.id;
+    const response = await fetch(`https://musicalmatchbackend.onrender.com/users/${userId}`);
+    const data = await response.json();
+    profileData.value = data;
 
-  console.log('Handling authentication. Code:', code);
-
-  if (!code) {
-    console.log('No authorization code found. Redirecting to auth code flow...');
-    redirectToAuthCodeFlow(clientId);
-  } else {
-    try {
-      console.log('Code found. Getting access token...');
-      const accessToken = await getAccessToken(clientId, code);
-      console.log('Access token obtained:', accessToken);
-      
-      console.log('Fetching user profile...');
-      const profile = await fetchProfile(accessToken);
-      console.log('User profile data:', profile);
-
-      console.log('Populating UI with profile data...');
-      populateUI(profile);
-
-      // Retrieve user answers from localStorage
-      const storedAnswers = localStorage.getItem('userAnswers');
-      console.log('Stored user answers:', storedAnswers);
-      if (storedAnswers) {
-        userAnswers.value = JSON.parse(storedAnswers);
-        console.log('User answers updated:', userAnswers.value);
-      }
-    } catch (error) {
-      console.error('Error in handleAuthentication:', error);
+    // Fetch stored quiz answers if available
+    const storedAnswers = localStorage.getItem('userAnswers');
+    if (storedAnswers) {
+      userAnswers.value = JSON.parse(storedAnswers);
     }
-  }
-};
-
-const redirectToAuthCodeFlow = async (clientId) => {
-  const verifier = generateCodeVerifier(128);
-  const challenge = await generateCodeChallenge(verifier);
-
-  localStorage.setItem("verifier", verifier);
-
-  const params = new URLSearchParams();
-  params.append("client_id", clientId);
-  params.append("response_type", "code");
-  params.append("redirect_uri", "https://musicalmatch.onrender.com/UserProfile"); // Updated redirect URI
-  params.append("scope", "user-read-private user-read-email");
-  params.append("code_challenge_method", "S256");
-  params.append("code_challenge", challenge);
-
-  console.log('Redirecting to Spotify auth URL:', `https://accounts.spotify.com/authorize?${params.toString()}`);
-  document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
-};
-
-// Function to generate code verifier
-const generateCodeVerifier = (length) => {
-  let text = '';
-  let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-  for (let i = 0; i < length; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
-};
-
-// Function to generate code challenge
-const generateCodeChallenge = async (codeVerifier) => {
-  const data = new TextEncoder().encode(codeVerifier);
-  if (window.crypto && window.crypto.subtle) {
-    const digest = await window.crypto.subtle.digest('SHA-256', data);
-    const challenge = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(digest))))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-    console.log('Generated code challenge:', challenge);
-    return challenge;
-  } else {
-    console.error('Web Cryptography API is not supported in this environment.');
-    return '';
-  }
-};
-
-// Function to fetch access token from Spotify API
-const getAccessToken = async (clientId, code) => {
-  const verifier = localStorage.getItem("verifier");
-
-  const params = new URLSearchParams();
-  params.append("client_id", clientId);
-  params.append("grant_type", "authorization_code");
-  params.append("code", code);
-  params.append("redirect_uri", "https://musicalmatch.onrender.com/UserProfile"); // Updated redirect URI
-  params.append("code_verifier", verifier);
-
-  try {
-    console.log('Fetching access token from Spotify API...');
-    const result = await fetch("https://accounts.spotify.com/api/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params
-    });
-
-    const data = await result.json();
-    console.log('Access token response:', data);
-    return data.access_token;
-  } catch (error) {
-    console.error('Error fetching access token:', error);
-    throw error;
-  }
-};
-
-// Function to fetch user profile from Spotify API
-const fetchProfile = async (token) => {
-  try {
-    console.log('Fetching user profile from Spotify API...');
-    const result = await fetch("https://api.spotify.com/v1/me", {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    const profile = await result.json();
-    console.log('User profile response:', profile);
-    return profile;
   } catch (error) {
     console.error('Error fetching user profile:', error);
-    throw error;
   }
 };
 
-// Function to populate UI with profile information
-const populateUI = (profile) => {
-  console.log('Populating UI with profile data:', profile);
-  displayName.value = profile.display_name;
-  avatarUrl.value = profile.images && profile.images.length > 0 ? profile.images[0].url : '';
-  userId.value = profile.id;
-  email.value = profile.email;
-  spotifyUri.value = profile.uri;
-  
-  const userProfileData = JSON.parse(localStorage.getItem('userProfile'));
-  console.log('User profile data from localStorage:', userProfileData);
+const saveProfile = async () => {
+  try {
+    const userId = store.state.user.id;
+    const response = await fetch(`https://musicalmatchbackend.onrender.com/users/${userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profileData.value)
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to update profile');
+    }
 
-  // Update user answers if available
-  if (userProfileData && userProfileData.answers) {
-    userAnswers.value = userProfileData.answers;
-    console.log('Updated user answers:', userAnswers.value);
+    // Optionally, update localStorage or Vuex store with the updated profile
+    const updatedProfile = await response.json();
+    store.commit('setUser', updatedProfile);
+  } catch (error) {
+    console.error('Error saving profile:', error);
   }
 };
 
-// Call the authentication handler when the component is mounted
-onMounted(handleAuthentication);
-
+onMounted(fetchUserProfile);
 </script>
 
-<style>
+<style scoped>
 .v-card {
   background-color: #f7f7f7;
   border-radius: 10px;

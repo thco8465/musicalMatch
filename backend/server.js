@@ -10,7 +10,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const app = express();
-//PSQL Connection: PGPASSWORD=fdEpOjc3FS3ebtGrGIpoh1OuY5Gn96O3 psql -h dpg-cr7oamlumphs73af1ngg-a.oregon-postgres.render.com -U musicuser -d musicdb_6ioi
+
 app.use(cors({
   origin: [
     'https://musicalmatchbackend.onrender.com',
@@ -27,20 +27,20 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'","https://accounts.spotify.com", "'sha256-YqD0Y6nJN+K0Y08J+Ena6eHgZrJ7WcWbIsC/u7GiyVk='"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://accounts.spotify.com", "'sha256-YqD0Y6nJN+K0Y08J+Ena6eHgZrJ7WcWbIsC/u7GiyVk='"],
         styleSrc: ["'self'", "https://fonts.googleapis.com"],
         imgSrc: ["'self'", "data:", "https://*.spotify.com"],
         connectSrc: ["'self'", "https://accounts.spotify.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         objectSrc: ["'none'"],
-        frameSrc: ["https://accounts.spotify.com"], // For embedding content from Spotify if needed
+        frameSrc: ["https://accounts.spotify.com"], 
         upgradeInsecureRequests: [],
       },
     },
   })
 );
 
-// Create a new pool instance with environment variables
+// PostgreSQL connection setup
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -48,6 +48,7 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
 });
+
 let spotifyToken = '';
 
 const getSpotifyToken = async () => {
@@ -68,10 +69,7 @@ const getSpotifyToken = async () => {
   }
 };
 
-// Automatically fetch the token every hour
-setInterval(getSpotifyToken, 3600000); // 3600000 ms = 1 hour
-
-// Fetch the token on server start
+setInterval(getSpotifyToken, 3600000); // Fetch token every hour
 getSpotifyToken();
 
 app.get('/spotify-token', (req, res) => {
@@ -80,6 +78,7 @@ app.get('/spotify-token', (req, res) => {
   }
   res.json({ token: spotifyToken });
 });
+
 app.post('/api/save-answers', async (req, res) => {
   const { userId, answers } = req.body;
   try {
@@ -106,6 +105,7 @@ app.post('/api/save-answers', async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+
 app.get('/UserProfile', async (req, res) => {
   const { code } = req.query;
 
@@ -117,7 +117,6 @@ app.get('/UserProfile', async (req, res) => {
   }
 
   try {
-    // Exchange code for access token
     console.log('Exchanging code for access token...');
     const response = await axios.post('https://accounts.spotify.com/api/token', new URLSearchParams({
       grant_type: 'authorization_code',
@@ -143,8 +142,6 @@ app.get('/UserProfile', async (req, res) => {
   }
 });
 
-
-// Fetch profiles excluding the current user and profiles that have already been liked
 app.get('/profiles', async (req, res) => {
   const userId = parseInt(req.query.userId, 10);
 
@@ -252,28 +249,28 @@ app.post('/signin', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1 OR phone = $2',
+      `SELECT id, password FROM users WHERE email = $1 OR phone = $2`,
       [emailOrPhone, emailOrPhone]
     );
 
     if (result.rows.length === 0) {
-      return res.status(401).json({ success: false, message: 'User not found' });
+      return res.status(400).json({ success: false, message: 'User not found' });
     }
 
     const user = result.rows[0];
-
     const match = await bcrypt.compare(password, user.password);
+
     if (!match) {
-      return res.status(401).json({ success: false, message: 'Invalid password' });
+      return res.status(400).json({ success: false, message: 'Invalid credentials' });
     }
 
-    const { password: _, ...userData } = user;
-    res.json({ success: true, user: userData });
+    res.json({ success: true, userId: user.id });
   } catch (err) {
     console.error('Error signing in:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
