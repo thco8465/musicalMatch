@@ -127,7 +127,7 @@ onMounted(fetchUserProfile);
 
 .profile-img img {
   position: absolute;
-  top: -100%; /* Adjust this value to move the image down */
+  top: 0%; /* Adjust this value to move the image down */
   left: 50%;
   transform: translate(-50%, 0); /* Center horizontally; no vertical adjustment needed */
   width: 100%;
