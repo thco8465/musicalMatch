@@ -51,7 +51,7 @@ import { useStore } from 'vuex'; // If you're using Vuex to manage state
 import { useRouter } from 'vue-router';
 
 const store = useStore();
-const router = useRouter();
+//const router = useRouter();
 
 const profileData = ref({
   first_name: '',
