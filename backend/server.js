@@ -249,27 +249,29 @@ app.post('/signin', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT id, password FROM users WHERE email = $1 OR phone = $2`,
+      'SELECT * FROM users WHERE email = $1 OR phone = $2',
       [emailOrPhone, emailOrPhone]
     );
 
     if (result.rows.length === 0) {
-      return res.status(400).json({ success: false, message: 'User not found' });
+      return res.status(401).json({ success: false, message: 'User not found' });
     }
 
     const user = result.rows[0];
-    const match = await bcrypt.compare(password, user.password);
 
+    const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      return res.status(400).json({ success: false, message: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid password' });
     }
 
-    res.json({ success: true, userId: user.id });
+    const { password: _, ...userData } = user;
+    res.json({ success: true, user: userData }); // Ensure the user data is correctly sent to the client
   } catch (err) {
     console.error('Error signing in:', err);
-    res.status(500).json({ success: false, message: 'Server Error' });
+    res.status(500).send('Server Error');
   }
 });
+
 
 app.listen(3000, () => {
   console.log('Server running on port 3000');
