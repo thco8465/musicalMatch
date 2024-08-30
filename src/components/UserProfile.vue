@@ -1,7 +1,8 @@
 <template>
-  <v-container fluid>
+  <v-container fluid class="profile-container">
     <v-card class="mx-auto" max-width="800" outlined elevation="2">
-      <v-img :src="profileData.profile_picture || defaultAvatar" height="200px" class="grey lighten-2">
+      <!-- Use v-img with contain or cover for better fit -->
+      <v-img :src="profileData.profile_picture || defaultAvatar" class="profile-img" aspect-ratio="16/9">
         <v-row no-gutters>
           <v-col>
             <v-avatar size="100" class="mt-n16 ml-4">
@@ -73,13 +74,9 @@ const isEditing = ref(false);
 const fetchUserProfile = async () => {
   try {
     const userId = store.state.user.id;
-    const cacheBuster = new Date().getTime(); // Add a unique query parameter to bypass cache
-    const response = await fetch(`https://musicalmatchbackend.onrender.com/users/${userId}?cacheBuster=${cacheBuster}`);
+    const response = await fetch(`https://musicalmatchbackend.onrender.com/users/${userId}`);
     const data = await response.json();
-    profileData.value = {
-      ...profileData.value,
-      ...data.user, // Ensure the data is correctly mapped
-    };
+    profileData.value = data;
 
     // Fetch stored quiz answers if available
     const storedAnswers = localStorage.getItem('userAnswers');
@@ -121,10 +118,13 @@ onMounted(fetchUserProfile);
 </script>
 
 <style scoped>
-.v-card {
-  position: relative;
-  background-color: #f7f7f7;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.profile-container {
+  margin-top: 80px; /* Adjust this value based on your layout */
+}
+
+.profile-img {
+  height: 200px;
+  object-fit: cover; /* Ensures the image covers the container */
+  width: 100%;
 }
 </style>
