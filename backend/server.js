@@ -105,7 +105,30 @@ app.post('/api/save-answers', async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+app.get('/users/:id', async (req, res) => {
+  const userId = parseInt(req.params.id);
 
+  if (isNaN(userId)) {
+    return res.status(400).json({ success: false, message: 'Invalid user ID' });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT id, email, phone, first_name, last_name, age, location, bio, profile_picture, similarity_score
+       FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({ success: true, user: result.rows[0] });
+  } catch (err) {
+    console.error('Error fetching user profile:', err);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+});
 app.get('/UserProfile', async (req, res) => {
   const { code } = req.query;
 
@@ -249,26 +272,29 @@ app.post('/signin', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1 OR phone = $2',
+      `SELECT id, email, phone, first_name, last_name, age, location, bio, profile_picture, similarity_score, password 
+       FROM users WHERE email = $1 OR phone = $2`,
       [emailOrPhone, emailOrPhone]
     );
 
     if (result.rows.length === 0) {
-      return res.status(401).json({ success: false, message: 'User not found' });
+      return res.status(400).json({ success: false, message: 'User not found' });
     }
 
     const user = result.rows[0];
-
     const match = await bcrypt.compare(password, user.password);
+
     if (!match) {
-      return res.status(401).json({ success: false, message: 'Invalid password' });
+      return res.status(400).json({ success: false, message: 'Invalid credentials' });
     }
 
-    const { password: _, ...userData } = user;
-    res.json({ success: true, user: userData }); // Ensure the user data is correctly sent to the client
+    // Exclude the password before sending the user data back to the client
+    const { password: userPassword, ...userWithoutPassword } = user;
+
+    res.json({ success: true, user: userWithoutPassword });
   } catch (err) {
     console.error('Error signing in:', err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 });
 
