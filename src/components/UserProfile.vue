@@ -67,7 +67,7 @@ const profileData = ref({
 const userAnswers = ref([]);
 
 const valid = ref(false);
-const defaultAvatar = '/mnt/c/Users/tcoll/Project1/musicMatch/musical-matchmaker/public/images/dog1.jpg'; // Add a path to a default avatar image
+const defaultAvatar = '/images/dog1.jpg'; // Add a path to a default avatar image
 
 const fetchUserProfile = async () => {
   try {

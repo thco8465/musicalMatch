@@ -1,13 +1,16 @@
 <template>
   <div>
     <h1 class="sexy-header">Find Harmony</h1>
-    <div class="container">
+    <div v-if="profiles.length > 0" class="container">
       <ProfileCard 
         :profile="currentProfile" 
         :nextProfile="nextProfile" 
         @likeProfile="likeProfile" 
         @dislikeProfile="dislikeProfile"
       />
+    </div>
+    <div v-else class="no-profiles-message">
+      <p>No profiles available at the moment. Please check back later!</p>
     </div>
   </div>
 </template>
@@ -27,30 +30,32 @@ export default {
     };
   },
   computed: {
-  currentProfile() {
-    console.log('Current Profile:', this.profiles[this.currentIndex]); // Debug log
-    return this.profiles[this.currentIndex];
-  }
-},
+    currentProfile() {
+      if (this.profiles.length === 0) return null;
+      return this.profiles[this.currentIndex];
+    },
+  },
   methods: {
     async fetchProfiles() {
-  try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user) {
-      this.userId = user.id;
-    }
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user) {
+          this.userId = user.id;
+        }
 
-    const response = await fetch(`https://musicalmatchbackend.onrender.com/profiles?userId=${this.userId}`);
-    const data = await response.json();
-    this.profiles = data;
-    console.log('Fetched Profiles:', this.profiles); // Debug log
-    if (this.profiles.length > 0) {
-      this.currentIndex = 0;
-    }
-  } catch (error) {
-    console.error('Error fetching profiles:', error);
-  }
-},
+        const response = await fetch(`https://musicalmatchbackend.onrender.com/profiles?userId=${this.userId}`);
+        const data = await response.json();
+        this.profiles = data;
+        console.log('Fetched Profiles:', this.profiles); // Debug log
+        if (this.profiles.length > 0) {
+          this.currentIndex = 0;
+        } else {
+          this.currentIndex = 0; // Reset index if no profiles
+        }
+      } catch (error) {
+        console.error('Error fetching profiles:', error);
+      }
+    },
     nextProfile() {
       if (this.profiles.length > 0) {
         this.currentIndex = (this.currentIndex + 1) % this.profiles.length;
@@ -82,21 +87,22 @@ export default {
       } catch (error) {
         console.error('Error disliking profile:', error);
       }
-    }
+    },
   },
   mounted() {
     this.fetchProfiles();
-  }
+  },
 };
 </script>
 
-<style>
+<style scoped>
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 60vh; /* Full height of the viewport */
 }
+
 .sexy-header {
   font-family: 'Great Vibes', cursive; /* Stylish font */
   font-size: 48px; /* Large font size */
@@ -105,5 +111,12 @@ export default {
   letter-spacing: 1px; /* Slightly increased letter spacing */
   text-align: center; /* Centered text */
   margin: 10px 0; /* Spacing around the header */
+}
+
+.no-profiles-message {
+  text-align: center;
+  padding: 20px;
+  font-size: 18px;
+  color: #9B6A6C;
 }
 </style>
